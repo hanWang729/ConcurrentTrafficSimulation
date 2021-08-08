@@ -2,8 +2,11 @@
 #define TRAFFICLIGHT_H
 
 #include <mutex>
+#include <future>
 #include <deque>
 #include <condition_variable>
+#include <cstdlib>
+#include <ctime>
 #include "TrafficObject.h"
 
 // forward declarations to avoid include cycle
@@ -19,8 +22,13 @@ template <class T>
 class MessageQueue
 {
 public:
+    T receive();
+    void send(T &&m);
 
 private:
+    std::deque<T> _queue;
+    std::condition_variable _cond;
+    std::mutex _mutex;
     
 };
 
@@ -34,9 +42,10 @@ class TrafficLight : public TrafficObject
 {
 public:
     // constructor / desctructor
-
+    TrafficLight();
+    // ~TrafficLight();
     // getters / setters
-
+    
     // typical behaviour methods
     void waitForGreen();
     void simulate();
@@ -46,7 +55,7 @@ public:
 private:
     // typical behaviour methods
     void cycleThroughPhases();
-    TrafficLightPhase _currentPhase;
+    TrafficLightPhase _currentPhase {TrafficLightPhase::red};
 
     // FP.4b : create a private member of type MessageQueue for messages of type TrafficLightPhase 
     // and use it within the infinite loop to push each new TrafficLightPhase into it by calling 
@@ -54,6 +63,8 @@ private:
 
     std::condition_variable _condition;
     std::mutex _mutex;
+    MessageQueue<TrafficLightPhase> _messageQueue; // use it in infinite loop in Task 2
+    // std::shared_ptr<MessageQueue<TrafficLightPhase>> _messageQueue(new MessageQueue<TrafficLightPhase>);
 };
 
 #endif
